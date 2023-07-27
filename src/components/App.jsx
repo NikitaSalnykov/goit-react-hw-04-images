@@ -1,11 +1,13 @@
-import { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { AppContainer } from './App.styled';
-import Searchbar from './Searchbar/Searchbar';
+import { Searchbar } from './Searchbar/Searchbar';
 import { ImageGallery } from './ImageGallery/ImageGallery';
 import { Button } from './Button/Button';
 import { getImages } from 'services/pixabayAPI';
 import { Modal } from './Modal/Modal';
 import { Loader } from './Loader/Loader';
+
+export const Context = React.createContext();
 
 export const App = () => {
   const [value, setValue] = useState('');
@@ -20,8 +22,11 @@ export const App = () => {
   const prevPageRef = useRef(1);
 
   useEffect(() => {
-    prevValueRef.current = value;
-    prevPageRef.current = page;
+    if (!value) {
+      setGallery([]);
+      setLoadMore(false);
+      return;
+    }
 
     if (prevValueRef.current !== value) {
       setIsLoading(true);
@@ -31,26 +36,28 @@ export const App = () => {
       setPage(1);
     }
 
+    prevValueRef.current = value;
+    prevPageRef.current = page;
+
     const fetchData = async () => {
       const resp = await getImages(value, page).then(resp => resp.data);
       setGallery(resp.hits);
 
       if (resp.totalHits > page * 12) {
-        setIsLoading(false);
         setLoadMore(true);
+        setIsLoading(false);
       } else if (resp.totalHits === 0) {
+        setNotFoundText(true);
+        setLoadMore(false);
         setIsLoading(false);
-        notFoundText(true);
       } else {
-        setIsLoading(false);
+        setLoadMore(false);
         setIsLoading(false);
       }
-
       if (prevPageRef.current !== page) {
         setGallery(resp.hits);
       }
     };
-
     fetchData();
   }, [value, page]);
 
@@ -59,7 +66,7 @@ export const App = () => {
     setLargeImgObj(largeImgObj);
   };
 
-  const closeModal = () => setModalActive(true);
+  const closeModal = () => setModalActive(false);
 
   const handleSubmit = async value => setValue(value);
 
@@ -69,18 +76,18 @@ export const App = () => {
   };
 
   return (
-    <AppContainer>
-      <Searchbar onSubmit={handleSubmit} />
-      {isLoading && <Loader />}
-      {notFoundText ? (
-        <p>No results found for '{value}'</p>
-      ) : (
-        <ImageGallery gallery={gallery} showModal={showModal} />
-      )}
-      {loadMore && <Button onClick={handleLoadMore} children="Load more" />}
-      {modalActive && (
-        <Modal largeImgObj={largeImgObj} closeModal={closeModal} />
-      )}
-    </AppContainer>
+    <Context.Provider value={{ open: showModal, close: closeModal }}>
+      <AppContainer>
+        <Searchbar onSubmit={handleSubmit} />
+        {isLoading && <Loader />}
+        {notFoundText ? (
+          <p>No results found for '{value}'</p>
+        ) : (
+          <ImageGallery gallery={gallery} />
+        )}
+        {loadMore && <Button onClick={handleLoadMore} children="Load more" />}
+        {modalActive && <Modal largeImgObj={largeImgObj} />}
+      </AppContainer>
+    </Context.Provider>
   );
 };

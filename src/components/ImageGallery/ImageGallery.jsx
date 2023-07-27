@@ -1,9 +1,8 @@
-import React from 'react';
 import { GalleryList } from './ImageGallery.styled';
 import { ImageGalleryItem } from 'components/ImageGalleryItem/ImageGalleryItem';
 import PropTypes from 'prop-types';
 
-export const ImageGallery = ({ gallery, showModal }) => {
+export const ImageGallery = ({ gallery }) => {
   return (
     <GalleryList>
       {gallery.map(el => {
@@ -13,7 +12,6 @@ export const ImageGallery = ({ gallery, showModal }) => {
             img={el.webformatURL}
             largeImageURL={el.largeImageURL}
             tags={el.tags}
-            showModal={showModal}
           />
         );
       })}
@@ -23,5 +21,4 @@ export const ImageGallery = ({ gallery, showModal }) => {
 
 ImageGallery.propTypes = {
   gallery: PropTypes.arrayOf(PropTypes.object).isRequired,
-  showModal: PropTypes.func.isRequired,
 };

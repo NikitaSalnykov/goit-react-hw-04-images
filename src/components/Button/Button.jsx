@@ -1,4 +1,3 @@
-import React from 'react';
 import { Btn } from 'components/Button/Button.styled';
 import PropTypes from 'prop-types';
 

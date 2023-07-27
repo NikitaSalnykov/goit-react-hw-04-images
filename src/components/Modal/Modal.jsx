@@ -1,46 +1,44 @@
-import React, { Component } from 'react';
+import { useEffect, useContext } from 'react';
+import { Context } from 'components/App';
 import { ModalContainer, ModalLoader, Overlay } from './Modal.style';
 import { Loader } from 'components/Loader/Loader';
 import PropTypes from 'prop-types';
 
-export class Modal extends Component {
-  componentDidMount() {
-    window.addEventListener('keydown', this.handleCloseModal);
-  }
+export const Modal = ({ largeImgObj }) => {
+  const context = useContext(Context);
 
-  componentDidUpdate(prevProps, prevState) {
-    window.removeEventListener('keydown', this.handleCloseModal);
-  }
+  useEffect(() => {
+    window.addEventListener('keydown', handleCloseModal);
 
-  handleCloseModal = e => {
+    return () => {
+      window.removeEventListener('keydown', handleCloseModal);
+    };
+  }, []);
+
+  const handleCloseModal = e => {
     if (e.key === 'Escape' || e.currentTarget === e.target) {
-      this.props.closeModal();
+      context.close();
     }
   };
 
-  render() {
-    const { largeImgObj } = this.props;
-    console.log(largeImgObj.largeImageURL);
-    return (
-      <Overlay onClick={this.handleCloseModal}>
-        <ModalContainer>
-          <img
-            src={
-              largeImgObj.largeImageURL ||
-              'https://cid.center/wp-content/uploads/2020/11/placeholder.png'
-            }
-            alt={largeImgObj.tags}
-          />
-          <ModalLoader format={largeImgObj.largeImageURL}>
-            <Loader />
-          </ModalLoader>
-        </ModalContainer>
-      </Overlay>
-    );
-  }
-}
+  return (
+    <Overlay onClick={handleCloseModal}>
+      <ModalContainer>
+        <img
+          src={
+            largeImgObj.largeImageURL ||
+            'https://cid.center/wp-content/uploads/2020/11/placeholder.png'
+          }
+          alt={largeImgObj.tags}
+        />
+        <ModalLoader format={largeImgObj.largeImageURL}>
+          <Loader />
+        </ModalLoader>
+      </ModalContainer>
+    </Overlay>
+  );
+};
 
 Modal.propTypes = {
   largeImgObj: PropTypes.object.isRequired,
-  closeModal: PropTypes.func.isRequired,
 };
