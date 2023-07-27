@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { AppContainer } from './App.styled';
 import Searchbar from './Searchbar/Searchbar';
 import { ImageGallery } from './ImageGallery/ImageGallery';
@@ -7,99 +7,80 @@ import { getImages } from 'services/pixabayAPI';
 import { Modal } from './Modal/Modal';
 import { Loader } from './Loader/Loader';
 
-export class App extends Component {
-  state = {
-    value: '',
-    page: 1,
-    loadMore: false,
-    ModalActive: false,
-    largeImgObj: {},
-    gallery: [],
-    isLoading: false,
-    notFoundText: false,
-  };
+export const App = () => {
+  const [value, setValue] = useState('');
+  const [page, setPage] = useState(1);
+  const [loadMore, setLoadMore] = useState(false);
+  const [modalActive, setModalActive] = useState(false);
+  const [largeImgObj, setLargeImgObj] = useState({});
+  const [gallery, setGallery] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [notFoundText, setNotFoundText] = useState(false);
+  const prevValueRef = useRef('');
+  const prevPageRef = useRef(1);
 
-  async componentDidUpdate(_, prevState) {
-    const { value, page } = this.state;
+  useEffect(() => {
+    prevValueRef.current = value;
+    prevPageRef.current = page;
 
-    if (prevState.value !== value) {
-      this.setState({
-        isLoading: true,
-        loadMore: false,
-        gallery: [],
-        notFoundText: false,
-        page: 1,
-      });
+    if (prevValueRef.current !== value) {
+      setIsLoading(true);
+      setLoadMore(false);
+      setGallery([]);
+      setNotFoundText(false);
+      setPage(1);
+    }
+
+    const fetchData = async () => {
       const resp = await getImages(value, page).then(resp => resp.data);
-      this.setState({ gallery: resp.hits });
+      setGallery(resp.hits);
 
       if (resp.totalHits > page * 12) {
-        this.setState({
-          loadMore: true,
-          isLoading: false,
-        });
+        setIsLoading(false);
+        setLoadMore(true);
       } else if (resp.totalHits === 0) {
-        this.setState({
-          isLoading: false,
-          notFoundText: true,
-        });
+        setIsLoading(false);
+        notFoundText(true);
       } else {
-        this.setState({
-          loadMore: false,
-          isLoading: false,
-        });
+        setIsLoading(false);
+        setIsLoading(false);
       }
-    }
 
-    if (prevState.page !== page) {
-      const resp = await getImages(value, page + 1).then(resp => resp.data);
-      this.setState({ gallery: resp.hits });
-    }
-  }
+      if (prevPageRef.current !== page) {
+        setGallery(resp.hits);
+      }
+    };
 
-  showModal = largeImgObj => {
-    this.setState({ ModalActive: true });
-    this.setState({ largeImgObj });
+    fetchData();
+  }, [value, page]);
+
+  const showModal = largeImgObj => {
+    setModalActive(true);
+    setLargeImgObj(largeImgObj);
   };
 
-  closeModal = () => {
-    this.setState({ ModalActive: false });
+  const closeModal = () => setModalActive(true);
+
+  const handleSubmit = async value => setValue(value);
+
+  const handleLoadMore = async () => {
+    prevPageRef.current = page;
+    setPage(prevPageRef.current + 1);
   };
 
-  handleSubmit = async value => {
-    this.setState({ value });
-  };
-
-  handleLoadMore = async () => {
-    this.setState(prevState => ({ page: prevState.page + 1 }));
-  };
-
-  render() {
-    const {
-      loadMore,
-      gallery,
-      ModalActive,
-      largeImgObj,
-      isLoading,
-      notFoundText,
-      value,
-    } = this.state;
-    const { showModal, handleSubmit, handleLoadMore, closeModal } = this;
-
-    return (
-      <AppContainer>
-        <Searchbar onSubmit={handleSubmit} />
-        {isLoading && <Loader />}
-        {notFoundText ? (
-          <p>No results found for '{value}'</p>
-        ) : (
-          <ImageGallery gallery={gallery} showModal={showModal} />
-        )}
-        {loadMore && <Button onClick={handleLoadMore} children="Load more" />}
-        {ModalActive && (
-          <Modal largeImgObj={largeImgObj} closeModal={closeModal} />
-        )}
-      </AppContainer>
-    );
-  }
-}
+  return (
+    <AppContainer>
+      <Searchbar onSubmit={handleSubmit} />
+      {isLoading && <Loader />}
+      {notFoundText ? (
+        <p>No results found for '{value}'</p>
+      ) : (
+        <ImageGallery gallery={gallery} showModal={showModal} />
+      )}
+      {loadMore && <Button onClick={handleLoadMore} children="Load more" />}
+      {modalActive && (
+        <Modal largeImgObj={largeImgObj} closeModal={closeModal} />
+      )}
+    </AppContainer>
+  );
+};
