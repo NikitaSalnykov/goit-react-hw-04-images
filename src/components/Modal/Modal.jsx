@@ -8,21 +8,20 @@ export const Modal = ({ largeImgObj }) => {
   const context = useContext(Context);
 
   useEffect(() => {
+    const handleCloseModal = e => {
+      if (e.key === 'Escape') {
+        context.close();
+      }
+    };
     window.addEventListener('keydown', handleCloseModal);
 
     return () => {
       window.removeEventListener('keydown', handleCloseModal);
     };
-  }, []);
-
-  const handleCloseModal = e => {
-    if (e.key === 'Escape' || e.currentTarget === e.target) {
-      context.close();
-    }
-  };
+  }, [context]);
 
   return (
-    <Overlay onClick={handleCloseModal}>
+    <Overlay onClick={() => context.close()}>
       <ModalContainer>
         <img
           src={
